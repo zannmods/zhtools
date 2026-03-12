@@ -38,8 +38,16 @@ chmod +x install.sh
 # Jalankan instalasi otomatis
 ./install.sh
 ```
-##🎯 Cara Penggunaan
+## 🎯 Cara Penggunaan
 cara penggunaan tools nya
 
 ```bash
+#command standar
 python3 zhbun.py -d target.com
+```
+```bash
+python3 zhbun.py -d target.com --blind username.xss.ht
+```
+
+## ⚠️ Disclaimer
+**PENTING:** Alat ini dibuat untuk tujuan pendidikan dan program Bug Bounty yang sah. Penggunaan alat ini pada target tanpa izin tertulis adalah ilegal. Penulis **ZannMods** tidak bertanggung jawab atas segala penyalahgunaan atau kerusakan yang disebabkan oleh alat ini.
