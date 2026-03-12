@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Advanced Bug Bounty Automation Framework (PRO VERSION 5.0)
+Advanced Bug Bounty Automation Framework (PRO VERSION 5.1)
 Workflow: Subfinder -> HTTPX -> Katana (Crawling) -> Nuclei & Dalfox
 
-Pembaruan v5.0:
-- Penambahan mode STEALTH / ANTI-WAF
-- Random User-Agent otomatis
+Pembaruan v5.1:
+- Perbaikan bug "flag provided but not defined: -random-agent"
+- Custom Universal Random User-Agent injection
 - Delay & limitasi traffic cerdas untuk mencegah blokir WAF
 """
 
@@ -15,6 +15,7 @@ import subprocess
 import argparse
 import time
 import shutil
+import random
 from datetime import datetime
 
 class Colors:
@@ -30,7 +31,7 @@ class Colors:
 def print_banner():
     banner = f"""{Colors.CYAN}{Colors.BOLD}
     ╔══════════════════════════════════════════════════════════════╗
-    ║       BUG BOUNTY AUTOMATION SCANNER - ULTRA PRO v5.0         ║
+    ║       BUG BOUNTY AUTOMATION SCANNER - ULTRA PRO v5.1         ║
     ║  Workflow: Enum -> Probe -> Crawl -> Vuln Scan -> XSS Hunt   ║
     ╚══════════════════════════════════════════════════════════════╝
     {Colors.ENDC}"""
@@ -137,8 +138,19 @@ def check_file_has_data(filepath):
     """Memeriksa apakah file ada dan tidak kosong."""
     return os.path.exists(filepath) and os.path.getsize(filepath) > 0
 
+def get_random_user_agent():
+    """Mengembalikan User-Agent acak dari daftar yang valid."""
+    user_agents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0"
+    ]
+    return random.choice(user_agents)
+
 def main():
-    parser = argparse.ArgumentParser(description="Pro Bug Bounty Automation Framework v4 Interaktif")
+    parser = argparse.ArgumentParser(description="Pro Bug Bounty Automation Framework v5.1 Interaktif")
     parser.add_argument("-t", "--target", help="Target domain atau URL utama (contoh: target.com)", required=True)
     parser.add_argument("-o", "--output", help="Nama awalan folder output", default="scans")
     parser.add_argument("--blind", help="URL XSS Hunter / Interactsh untuk Blind XSS Dalfox", default="")
@@ -192,6 +204,9 @@ def main():
     nuclei_out = os.path.join(output_dir, "5_nuclei_findings.txt")
     dalfox_out = os.path.join(output_dir, "6_dalfox_xss.txt")
 
+    # Setup Universal User Agent
+    ua_flag = f'-H "User-Agent: {get_random_user_agent()}"' if stealth_mode else ""
+
     start_time = time.time()
 
     # TAHAP 1: Subfinder
@@ -210,7 +225,7 @@ def main():
     current_target_file = subs_file
     if use_httpx:
         if stealth_mode:
-            cmd_httpx = f"httpx -l {current_target_file} -silent -threads 10 -rl 20 -random-agent -o {live_file}"
+            cmd_httpx = f"httpx -l {current_target_file} -silent -threads 10 -rl 20 {ua_flag} -o {live_file}"
         else:
             cmd_httpx = f"httpx -l {current_target_file} -silent -threads 200 -rl 200 -o {live_file}"
             
@@ -229,7 +244,7 @@ def main():
         depth = 5 if deep_scan else 3
         timeout = 20 if deep_scan else 10
         if stealth_mode:
-            cmd_katana = f"katana -list {current_target_file} -silent -jc -kf all -d {depth} -c 5 -p 5 -rl 20 -random-agent -ct {timeout} -o {katana_out}"
+            cmd_katana = f"katana -list {current_target_file} -silent -jc -kf all -d {depth} -c 5 -p 5 -rl 20 {ua_flag} -ct {timeout} -o {katana_out}"
         else:
             cmd_katana = f"katana -list {current_target_file} -silent -jc -kf all -d {depth} -c 50 -p 50 -ct {timeout} -o {katana_out}"
             
@@ -239,7 +254,7 @@ def main():
     if use_nuclei:
         severities = "critical,high,medium,low" if deep_scan else "critical,high,medium"
         if stealth_mode:
-            cmd_nuclei = f"nuclei -l {current_target_file} -c 10 -bs 10 -rl 20 -random-agent -severity {severities} -o {nuclei_out}"
+            cmd_nuclei = f"nuclei -l {current_target_file} -c 10 -bs 10 -rl 20 {ua_flag} -severity {severities} -o {nuclei_out}"
         else:
             cmd_nuclei = f"nuclei -l {current_target_file} -c 100 -bs 100 -severity {severities} -o {nuclei_out}"
             
