@@ -37,7 +37,7 @@ chmod +x install.sh
 
 # Jalankan instalasi otomatis
 ./install.sh
-
+```
 ##🎯 Cara Penggunaan
 cara penggunaan tools nya
 
