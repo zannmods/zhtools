@@ -29,7 +29,7 @@ Cukup jalankan perintah berikut untuk menyiapkan lingkungan kerja Anda:
 
 ```bash
 # Clone repository
-git clone [https://github.com/zannmods/zhtools.git](https://github.com/zannmods/zhtools.git)
+git clone https://github.com/zannmods/zhtools.git
 cd zhtools
 
 # Berikan izin eksekusi pada installer
