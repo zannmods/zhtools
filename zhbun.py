@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-Advanced Bug Bounty Automation Framework (PRO VERSION 3.0)
+Advanced Bug Bounty Automation Framework (PRO VERSION 5.0)
 Workflow: Subfinder -> HTTPX -> Katana (Crawling) -> Nuclei & Dalfox
 
-Pembaruan v3.0:
-- Penambahan opsi single target (melewati subfinder)
-- Multithreading & Concurrency dioptimalkan untuk kecepatan
-- Filter parameter pintar (mengabaikan file statis)
-- Mode --deep untuk pencarian kerentanan lebih mendalam
+Pembaruan v5.0:
+- Penambahan mode STEALTH / ANTI-WAF
+- Random User-Agent otomatis
+- Delay & limitasi traffic cerdas untuk mencegah blokir WAF
 """
 
 import os
@@ -31,7 +30,7 @@ class Colors:
 def print_banner():
     banner = f"""{Colors.CYAN}{Colors.BOLD}
     ╔══════════════════════════════════════════════════════════════╗
-    ║       BUG BOUNTY AUTOMATION SCANNER - ULTRA PRO v4.0         ║
+    ║       BUG BOUNTY AUTOMATION SCANNER - ULTRA PRO v5.0         ║
     ║  Workflow: Enum -> Probe -> Crawl -> Vuln Scan -> XSS Hunt   ║
     ╚══════════════════════════════════════════════════════════════╝
     {Colors.ENDC}"""
@@ -165,6 +164,7 @@ def main():
         print(f"{Colors.WARNING}[!] Katana dinonaktifkan. Dalfox akan dilewati karena butuh data parameter endpoint.{Colors.ENDC}")
 
     deep_scan = ask_yes_no(f"Aktifkan mode {Colors.BOLD}DEEP SCAN{Colors.ENDC} (Lebih lambat, threads lebih agresif & mendalam)?", default="n")
+    stealth_mode = ask_yes_no(f"Aktifkan mode {Colors.BOLD}STEALTH / ANTI-WAF{Colors.ENDC} (Lambat, Random UA, mencegah blokir Cloudflare/dll)?", default="y")
     print(f"{Colors.HEADER}======================================={Colors.ENDC}\n")
 
     # Kumpulkan tools yang divalidasi
@@ -209,7 +209,11 @@ def main():
     # TAHAP 2: HTTPX
     current_target_file = subs_file
     if use_httpx:
-        cmd_httpx = f"httpx -l {current_target_file} -silent -threads 200 -rl 200 -o {live_file}"
+        if stealth_mode:
+            cmd_httpx = f"httpx -l {current_target_file} -silent -threads 10 -rl 20 -random-agent -o {live_file}"
+        else:
+            cmd_httpx = f"httpx -l {current_target_file} -silent -threads 200 -rl 200 -o {live_file}"
+            
         run_command(cmd_httpx, "Validasi Live Hosts (HTTPX)")
         if not check_file_has_data(live_file):
             print(f"{Colors.FAIL}[!] Tidak ada target yang merespon HTTP/HTTPS. Menghentikan proses.{Colors.ENDC}")
@@ -224,13 +228,21 @@ def main():
     if use_katana:
         depth = 5 if deep_scan else 3
         timeout = 20 if deep_scan else 10
-        cmd_katana = f"katana -list {current_target_file} -silent -jc -kf all -d {depth} -c 50 -p 50 -ct {timeout} -o {katana_out}"
+        if stealth_mode:
+            cmd_katana = f"katana -list {current_target_file} -silent -jc -kf all -d {depth} -c 5 -p 5 -rl 20 -random-agent -ct {timeout} -o {katana_out}"
+        else:
+            cmd_katana = f"katana -list {current_target_file} -silent -jc -kf all -d {depth} -c 50 -p 50 -ct {timeout} -o {katana_out}"
+            
         run_command(cmd_katana, f"Deep Crawling & Endpoint Discovery (Kedalaman: {depth})")
 
     # TAHAP 4: Nuclei
     if use_nuclei:
         severities = "critical,high,medium,low" if deep_scan else "critical,high,medium"
-        cmd_nuclei = f"nuclei -l {current_target_file} -c 100 -bs 100 -severity {severities} -o {nuclei_out}"
+        if stealth_mode:
+            cmd_nuclei = f"nuclei -l {current_target_file} -c 10 -bs 10 -rl 20 -random-agent -severity {severities} -o {nuclei_out}"
+        else:
+            cmd_nuclei = f"nuclei -l {current_target_file} -c 100 -bs 100 -severity {severities} -o {nuclei_out}"
+            
         run_command(cmd_nuclei, f"Vulnerability Scanning ({severities.upper()})")
 
     # TAHAP 5: Dalfox
@@ -240,7 +252,12 @@ def main():
             if has_params:
                 dalfox_blind = f"-b {args.blind}" if args.blind else ""
                 dalfox_deep = "--deep-domxss" if deep_scan else ""
-                cmd_dalfox = f"dalfox file {params_out} {dalfox_blind} {dalfox_deep} --worker 150 -o {dalfox_out}"
+                
+                if stealth_mode:
+                    cmd_dalfox = f"dalfox file {params_out} {dalfox_blind} {dalfox_deep} --worker 10 --delay 2 -o {dalfox_out}"
+                else:
+                    cmd_dalfox = f"dalfox file {params_out} {dalfox_blind} {dalfox_deep} --worker 150 -o {dalfox_out}"
+                    
                 run_command(cmd_dalfox, "Advanced XSS Hunting (Dalfox)")
             else:
                 print(f"{Colors.WARNING}[!] Tidak ada URL parameter valid ditemukan dari hasil Katana. Melewati Dalfox.{Colors.ENDC}")
