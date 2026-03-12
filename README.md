@@ -24,7 +24,7 @@ Pastikan kamu menggunakan Linux/macOS dan sudah menginstal Go (golang) dan Pytho
 
 Clone repository ini:
 
-git clone [https://github.com/username-kamu/nama-repo.git](https://github.com/username-kamu/nama-repo.git)
+git clone [[https://github.com/username-kamu/nama-repo.git](https://github.com/zannmods/zhtools)](https://github.com/username-kamu/nama-repo.git)
 cd nama-repo
 
 
