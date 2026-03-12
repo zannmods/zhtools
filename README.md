@@ -37,3 +37,9 @@ chmod +x install.sh
 
 # Jalankan instalasi otomatis
 ./install.sh
+
+##🎯 Cara Penggunaan
+cara penggunaan tools nya
+
+```bash
+python3 zhbun.py -d target.com
