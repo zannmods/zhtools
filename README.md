@@ -24,8 +24,8 @@ Pastikan kamu menggunakan Linux/macOS dan sudah menginstal Go (golang) dan Pytho
 
 Clone repository ini:
 
-git clone [[https://github.com/username-kamu/nama-repo.git](https://github.com/zannmods/zhtools)](https://github.com/username-kamu/nama-repo.git)
-cd nama-repo
+git clone [[https://github.com/zannmods/zhtools.git](https://github.com/zannmods/zhtools)](https://github.com/zannmods/zhtools.git)
+cd zhtools
 
 
 Jalankan skrip instalasi untuk mengunduh semua tools pendukung secara otomatis:
