@@ -1,5 +1,11 @@
-# Object file
-*.o
+Menyembunyikan folder hasil scan agar tidak ter-upload ke GitHub
 
-# Ada Library Information
-*.ali
+scans_/
+scan_results/
+*.txt
+
+Python
+
+pycache/
+*.pyc
+.env
